@@ -31,4 +31,4 @@ jobs:
       - name: Install dependencies
         run: poetry install
       - name: Unit testing
-        run: poetry run pytest
+        run: poetry run pytest -vv --cov=k8s_app_abstraction --cov-report term-missing
