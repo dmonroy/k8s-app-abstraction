@@ -6,9 +6,9 @@ on:
     branches: [main]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  ci:
     strategy:
+      fail-fast: false
       matrix:
         python-version:
           - 3.6
@@ -18,14 +18,18 @@ jobs:
           - 3.10
           - pypy-3.7
           - pypy-3.8
-          - pypy-3.9          -
-    name: Python ${{ matrix.python-version }} Unit Testing
+          - pypy-3.9
+        poetry-version: [1.1.13]
+        os: [ubuntu-20.04, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v3
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-          architecture: x64
-      - run: poetry install
-      - run: pytest
+      - name: Run image
+        uses: abatilo/actions-poetry@v2.0.0
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
+      - name: Unit testing
+        run: poetry run pytest
