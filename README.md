@@ -1,10 +1,13 @@
 # k8s-app-abstraction
+
 Experimental abstraction layer for application deployment to kubernetes
 
 ## Goal
+
 Simplify application deployment manifests.
 
 ## Whishlist
+
 Not actual requirements but rather the owner's ideal feature set:
 
 - Simple declarative manifests
@@ -27,6 +30,7 @@ Not actual requirements but rather the owner's ideal feature set:
 ## Example deployment manifests
 
 - Backend service with single replica:
+
 ```yaml
 # k8s/worker.yml
 # Defaults:
@@ -38,6 +42,7 @@ deployments:
 ```
 
 - HTTP service exposing port 80 and HTTP GET healthcheck:
+
 ```yaml
 # k8s/frontend.yml
 # Healthcheck performs HTTP GET against /index.html for all probes
@@ -53,6 +58,7 @@ deployments:
 ```
 
 - Statefulsets with internally exposed port (type: ClusterIP)
+
 ```yaml
 statefulsets:
   postgres:
@@ -65,10 +71,11 @@ statefulsets:
 ```
 
 - Multiple deployments on single file with resource defaults and dependencies:
+
 ```yaml
 # k8s/backend.yml
 # Healthcheck performs HTTP GET against /index.html for all probes
-# Exposes the container port 80 to the service's port 80 
+# Exposes the container port 80 to the service's port 80
 deployments:
   @defaults:
     image: voting/backend
@@ -77,7 +84,7 @@ deployments:
         - 80:8000
     healthchecks:
       - get: /healthz
-        
+
   api:
     command: python /app/api-service.py
     dependencies:
@@ -85,13 +92,14 @@ deployments:
 
   websocket-server:
     command: npm start
-    dependencies: 
+    dependencies:
       - exec: redis-cli -h {{ resolve(redis-ha) }} -p 6379 PING
         delay: 5
       - tcp: {{ resolve(postgres) }}:5432
 ```
 
 - Multiple cronjobs with custom command, and environment variables:
+
 ```yaml
 # k8s/cronjobs.yml
 cronjobs:
@@ -103,13 +111,15 @@ cronjobs:
   email-daily-updates:
     command: python /app/email-daily-update.py
     schedule: 0 8 * * TUE-SUN
-    
+
   email-weekly-updates:
     command: python /app/email-weekly-update.py
     schedule: 0 8 * * MON
 ```
 
-- Include base manifests from relative, absolute or remote locations, then override or extend:
+- Include base manifests from relative, absolute or remote locations, then
+override or extend:
+
 ```yaml
 include:
   - ~/company-defaults.yml
