@@ -6,14 +6,19 @@ on:
     branches: [main]
 
 jobs:
-  ci-base: &ci
+  ci-base:
     strategy:
-      fail-fast: false
       matrix:
         python-version:
+          - 3.6
+          - 3.7
           - 3.8
+          - 3.9
+          - pypy-3.7
+          - pypy-3.8
+          - pypy-3.9
         poetry-version: [1.1.13]
-        os: [ubuntu-20.04]
+        os: [ubuntu-20.04, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -28,21 +33,3 @@ jobs:
         run: poetry install
       - name: Unit testing
         run: poetry run pytest
-  # Reduce workload in CI by running all unit tests on a single platform
-  # first, if succeeded test all other platforms
-  ci-all:
-    <<: *ci
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version:
-          - 3.6
-          - 3.7
-          - 3.8
-          - 3.9
-          - "3.10"
-          - pypy-3.7
-          - pypy-3.8
-          - pypy-3.9
-        poetry-version: [1.1.13]
-        os: [ubuntu-20.04, macos-latest, windows-latest]
