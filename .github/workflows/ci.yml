@@ -6,18 +6,23 @@ on:
     branches: [main]
 
 jobs:
-  ci-base:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - uses: pre-commit/action@v2.0.3
+
+  unit-tests:
+    needs:
+      - pre-commit
     strategy:
       matrix:
         python-version:
           - 3.7
           - 3.8
           - 3.9
-          - pypy-3.7
-          - pypy-3.8
-          - pypy-3.9
-        poetry-version: [1.1.13]
-        os: [ubuntu-20.04, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -27,8 +32,8 @@ jobs:
       - name: Run image
         uses: abatilo/actions-poetry@v2.0.0
         with:
-          poetry-version: ${{ matrix.poetry-version }}
+          poetry-version: 1.1.13
       - name: Install dependencies
         run: poetry install
       - name: Unit testing
-        run: poetry run pytest
+        run: poetry run pytest -vv --cov=k8s_app_abstraction --cov-report term-missing
