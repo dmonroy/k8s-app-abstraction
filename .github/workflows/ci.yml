@@ -6,7 +6,9 @@ on:
     branches: [main]
 
 jobs:
-  ci-base:
+  ci:
+    needs:
+      - pre-commit
     strategy:
       matrix:
         python-version:
