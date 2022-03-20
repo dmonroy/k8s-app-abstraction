@@ -97,7 +97,7 @@ def test_stack_dump():
 
     with TemporaryDirectory() as location:
         stack.chart.dump(location)
-        assert os.listdir(location) == ["templates", "Chart.yaml"]
+        assert set(os.listdir(location)) == {"templates", "Chart.yaml"}
         assert set(os.listdir(os.path.join(location, "templates"))) == {
             "deployment-a-deploy.yml",
             "daemonset-a-daemonset.yml",
