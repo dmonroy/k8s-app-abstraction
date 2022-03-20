@@ -1,3 +1,5 @@
+from re import sub
+
 import yaml
 
 
@@ -32,3 +34,29 @@ def camelize(key) -> str:
     """camelCase given key"""
     enumerated = enumerate(key.lower().split("_"))
     return "".join(_ if i == 0 else _.capitalize() for i, _ in enumerated)
+
+
+def snakelize(s):
+    return "_".join(
+        sub(
+            "([A-Z][a-z]+)", r" \1", sub("([A-Z]+)", r" \1", s.replace("-", " "))
+        ).split()
+    ).lower()
+
+
+def dict_to_yaml(data):
+    def _format(res):
+        if isinstance(res, dict):
+            new = {}
+            for k, v in res.items():
+                k = camelize(k)
+                if v is not None:
+                    new[k] = _format(v)
+            return new
+
+        if isinstance(res, list):
+            return [_format(_) for _ in res]
+
+        return res
+
+    return yaml.safe_dump(_format(data))

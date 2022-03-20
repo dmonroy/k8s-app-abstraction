@@ -35,5 +35,38 @@ jobs:
           poetry-version: 1.1.13
       - name: Install dependencies
         run: poetry install
+      - run: poetry run pip install kubernetes
       - name: Unit testing
-        run: poetry run pytest -vv --cov=k8s_app_abstraction --cov-report term-missing
+        run: poetry run pytest -vv --cov=k8s_app_abstraction --cov-report term-missing -m 'not integration'
+
+  integration-tests:
+    needs:
+      - unit-tests
+    strategy:
+      matrix:
+        kubernetes-version:
+          - 1.18.20
+          - 1.19.16
+          - 1.20.14
+          - 1.21.11
+          - 1.22.8
+          - 1.23.5
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Minikube with Kubernetes ${{ matrix.kubernetes-version }}
+        uses: manusa/actions-setup-minikube@v2.4.3
+        with:
+          minikube version: 'v1.24.0'
+          kubernetes version: ${{ matrix.kubernetes-version }}
+          github token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - uses: abatilo/actions-poetry@v2.0.0
+        with:
+          poetry-version: 1.1.13
+      - run: poetry install
+      - run: poetry run pip install $(python -c "import sys; num=int(sys.argv[1].split('.')[1]); print(f'kubernetes>={num},<{num+1}')" ${{ matrix.kubernetes-version }})
+      - name: Integration testing
+        run: poetry run pytest -vv --cov=k8s_app_abstraction --cov-report term-missing -m integration

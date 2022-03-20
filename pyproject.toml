@@ -8,7 +8,6 @@ authors = ["Darwin Monroy <contact@darwinmonroy.com>"]
 python = "^3.7"
 PyYAML = "^6.0"
 pydantic = "^1.9.0"
-kubernetes = "^23.3.0"
 parameterize = "^0.2"
 
 [tool.poetry.dev-dependencies]
@@ -50,6 +49,11 @@ minversion = "6.0"
 addopts = "-ra -q --cov"
 testpaths = [
     "tests",
+]
+
+markers = [
+  "unit: Unit tests",
+  "integration: Intragration tests",
 ]
 
 [tool.coverage.run]
