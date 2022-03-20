@@ -6,12 +6,8 @@ from tempfile import TemporaryDirectory
 from typing import Optional
 
 import kubernetes
-from kubernetes import client, config
-
-config.load_kube_config()
-
-
 import yaml
+from kubernetes import client, config
 from pydantic import validator
 
 from k8s_app_abstraction.models.base import Base, YamlMixin
@@ -158,6 +154,9 @@ class HelmChart(Base, YamlMixin):
         )
 
     def rollout(self, location: Optional[str] = None) -> "HelmRelease":
+        # Load kubernetes config
+        config.load_kube_config()
+
         self.check_compatibility()
 
         def _rollout(loc: str) -> HelmRelease:
