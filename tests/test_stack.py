@@ -4,6 +4,7 @@ from tempfile import TemporaryDirectory
 from unittest import mock
 from unittest.mock import call
 
+import kubernetes
 import pytest
 import yaml
 
@@ -104,7 +105,13 @@ def test_stack_dump():
         }
 
 
-def test_stack_install():
+@mock.patch("k8s_app_abstraction.models.stack.config")
+@mock.patch("k8s_app_abstraction.models.stack.client")
+def test_stack_install(mock_client, mock_config):
+    # Force compatibility with mocked kubernetes api and library version
+    kver = kubernetes.__version__.split(".")[0]
+    mock_client.VersionApi().get_code().git_version = f"v1.{kver}.0"
+    mock_client.VersionApi().get_code().minor = kver
     stack = Stack(
         name="my-stack",
         deployments=[Deployment(name="a-deploy", image="bar", replicas=2)],
