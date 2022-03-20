@@ -35,6 +35,7 @@ jobs:
           poetry-version: 1.1.13
       - name: Install dependencies
         run: poetry install
+      - run: poetry run pip install kubernetes
       - name: Unit testing
         run: poetry run pytest -vv --cov=k8s_app_abstraction --cov-report term-missing -m 'not integration'
 
