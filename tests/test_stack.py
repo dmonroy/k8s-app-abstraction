@@ -1,3 +1,10 @@
+import os
+from subprocess import STDOUT
+from tempfile import TemporaryDirectory
+from unittest import mock
+from unittest.mock import call
+
+import pytest
 import yaml
 
 from k8s_app_abstraction.models.pod_controllers import (
@@ -59,5 +66,58 @@ def test_stack_to_yaml():
     assert deploy["apiVersion"] == "apps/v1"
     assert deploy["spec"]["replicas"] == 2
 
-    deploy = generated["Daemonset/a-daemonset"]
-    assert deploy["apiVersion"] == "apps/v1"
+    daemonset = generated["DaemonSet/a-daemonset"]
+    assert daemonset["apiVersion"] == "apps/v1"
+
+
+def test_stack_to_chart():
+    stack = Stack(
+        name="my-stack",
+        deployments=[Deployment(name="a-deploy", image="bar", replicas=2)],
+        daemonsets=[Daemonset(name="a-daemonset", image="bar")],
+        statefulsets=[Statefulset(name="a-statefulset", image="bar")],
+    )
+    files = dict(stack.chart.generate_files())
+    assert list(files.keys()) == [
+        "Chart.yaml",
+        "templates/deployment-a-deploy.yml",
+        "templates/daemonset-a-daemonset.yml",
+        "templates/statefulset-a-statefulset.yml",
+    ]
+
+
+def test_stack_dump():
+    stack = Stack(
+        name="my-stack",
+        deployments=[Deployment(name="a-deploy", image="bar", replicas=2)],
+        daemonsets=[Daemonset(name="a-daemonset", image="bar")],
+        statefulsets=[Statefulset(name="a-statefulset", image="bar")],
+    )
+
+    with TemporaryDirectory() as location:
+        stack.chart.dump(location)
+        assert os.listdir(location) == ["templates", "Chart.yaml"]
+        assert set(os.listdir(os.path.join(location, "templates"))) == {
+            "deployment-a-deploy.yml",
+            "daemonset-a-daemonset.yml",
+            "statefulset-a-statefulset.yml",
+        }
+
+
+def test_stack_install():
+    stack = Stack(
+        name="my-stack",
+        deployments=[Deployment(name="a-deploy", image="bar", replicas=2)],
+        daemonsets=[Daemonset(name="a-daemonset", image="bar")],
+        statefulsets=[Statefulset(name="a-statefulset", image="bar")],
+    )
+
+    with TemporaryDirectory() as location:
+        with mock.patch(
+            "k8s_app_abstraction.models.stack.check_output"
+        ) as check_output:
+            stack.chart.rollout(location)
+
+        check_output.assert_called_once_with(
+            ["helm", "upgrade", "--install", "my-stack", location], stderr=STDOUT
+        )
