@@ -1,7 +1,17 @@
 import os
 from re import sub
+from urllib.parse import urlparse
 
+import requests
 import yaml
+
+
+def uri_validator(x):
+    try:
+        result = urlparse(x)
+        return all([result.scheme, result.netloc])
+    except Exception:
+        return False
 
 
 def merge(dict1, dict2):
@@ -44,6 +54,9 @@ def parse_yaml(content):
 
 def load_yaml_files(*args):
     def load_yaml_file(filepath) -> str:
+        if uri_validator(filepath):
+            return requests.get(filepath).content
+
         with open(filepath) as f:
             return f.read()
 
