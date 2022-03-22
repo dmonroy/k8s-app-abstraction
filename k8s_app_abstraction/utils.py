@@ -1,6 +1,17 @@
+import os
 from re import sub
+from urllib.parse import urlparse
 
+import requests
 import yaml
+
+
+def uri_validator(x):
+    try:
+        result = urlparse(x)
+        return all([result.scheme, result.netloc])
+    except Exception:
+        return False
 
 
 def merge(dict1, dict2):
@@ -24,10 +35,36 @@ def merge(dict1, dict2):
 def parse_yaml(content):
     result = {}
     for partial in yaml.safe_load_all(content):
-        if partial is not None:
-            result = dict(merge(result, partial))
+        if not partial:
+            continue
+
+        include = partial.pop("include", [])
+        included = {}
+        for child in include:
+            child_dict = dict(load_yaml_files(child))
+            included = dict(merge(included, child_dict))
+
+        if include:
+            partial = dict(merge(included, partial))
+
+        result = dict(merge(result, partial))
 
     return {k: v for k, v in result.items() if not k.startswith(".")}
+
+
+def load_yaml_files(*args):
+    def load_yaml_file(filepath) -> str:
+        if uri_validator(filepath):
+            return requests.get(filepath).content
+
+        with open(filepath) as f:
+            return f.read()
+
+    def _load_all_files():
+        for filepath in args:
+            yield load_yaml_file(filepath)
+
+    return parse_yaml("\n---\n".join(_ for _ in _load_all_files() if _))
 
 
 def camelize(key) -> str:

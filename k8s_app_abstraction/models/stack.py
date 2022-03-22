@@ -21,7 +21,7 @@ from k8s_app_abstraction.models.pod_controllers import (
     StatefulsetList,
 )
 from k8s_app_abstraction.models.resource import Resource, ResourceList
-from k8s_app_abstraction.utils import dict_to_yaml, parse_yaml
+from k8s_app_abstraction.utils import dict_to_yaml, load_yaml_files, parse_yaml
 
 
 class Stack(Base, YamlMixin):
@@ -40,6 +40,10 @@ class Stack(Base, YamlMixin):
     @classmethod
     def new(cls, name: str, definition: str) -> "Stack":
         return Stack(name=name, **parse_yaml(definition))
+
+    @classmethod
+    def from_files(cls, *args: str) -> "Stack":
+        definition = load_yaml_files(*args)
 
     @property
     def chart(self):
