@@ -21,7 +21,7 @@ deployments:
 BASE_YAML = """
 include:
 - /etc/company/databases.yml
-- https://dev.inter.net//something-amazing/manifest.yml
+- https://dev.inter.net/something-amazing/manifest.yml
 
 deployments:
   foo:
@@ -55,7 +55,7 @@ MOCKED_FILES = {
 }
 
 MOCKED_URLS = {
-    "https://dev.inter.net//something-amazing/manifest.yml": WEB_YAML,
+    "https://dev.inter.net/something-amazing/manifest.yml": WEB_YAML,
 }
 
 
