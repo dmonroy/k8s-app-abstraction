@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 
 import requests
 import yaml
+from jinja2 import BaseLoader, Environment
 
 
 def uri_validator(x):
