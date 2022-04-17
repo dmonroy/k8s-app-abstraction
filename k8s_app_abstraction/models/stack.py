@@ -49,6 +49,11 @@ class Stack(Base, YamlMixin):
     def chart(self):
         return HelmChart(stack=self, template_generator=self.yaml_files)
 
+    def to_yaml(self, context: Optional[dict] = None) -> str:
+        return super(Stack, self).to_yaml(
+            context={"stack": self} if context is None else context
+        )
+
     @property
     def get_all_resources(self):
         for k in self.__annotations__.keys():
@@ -77,7 +82,10 @@ class Stack(Base, YamlMixin):
         if isinstance(value, dict):
             dl = DeploymentList()
             for name, structure in value.items():
-                dl.append(Deployment(name=name, **structure))
+                if isinstance(structure, Deployment):
+                    dl.append(structure)
+                else:
+                    dl.append(Deployment(name=name, **structure))
 
             return dl
 
@@ -126,7 +134,11 @@ class HelmChart(Base, YamlMixin):
 
     def generate_files(self):
         yield self.generate_info_file()
-        for filename, template in self.yaml_files():
+        for filename, template in self.yaml_files(
+            context={
+                "stack": self.stack,
+            }
+        ):
             yield f"templates/{filename}", template
 
     def generate_info_file(self):
@@ -136,7 +148,8 @@ class HelmChart(Base, YamlMixin):
                 "description": self.stack.description,
                 "version": self.stack.version or "0.1.0",
                 "app_version": self.stack.app_version or self.stack.version or "0.1.0",
-            }
+            },
+            context=None,
         )
 
     def dump(self, folder):
@@ -193,7 +206,7 @@ class HelmChart(Base, YamlMixin):
 
     def get_kubernetes_resources(self):
         for res in self.stack.get_all_resources:
-            yield res.get_from_kubernetes()
+            yield res.get_from_kubernetes(stack=self.stack)
 
 
 class HelmRelease(Base):

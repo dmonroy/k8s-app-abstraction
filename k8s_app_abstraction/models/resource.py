@@ -3,7 +3,7 @@ from typing import Optional
 from kubernetes.client import V1ObjectMeta
 
 from k8s_app_abstraction.models.base import Base, YamlMixin
-from k8s_app_abstraction.utils import merge
+from k8s_app_abstraction.utils import Prefixed, merge
 
 
 class Resource(Base, YamlMixin):
@@ -22,7 +22,7 @@ class Resource(Base, YamlMixin):
     @property
     def _metadata_defaults(self):
         return {
-            "name": self.name,
+            "name": Prefixed(self.name),
             "labels": {
                 "app.kubernetes.io/name": self.name,
                 "app.kubernetes.io/instance": self.name,
@@ -43,11 +43,12 @@ class Resource(Base, YamlMixin):
         api = self._apis[api_name]
         return getattr(api, self._api_loader)
 
-    def kubernetes_resource(self):
-        return self.kubernetes_loader(name=self.name)
+    def kubernetes_resource(self, stack: "Stack" = None):
+        name = Prefixed(self.name).render(context={"stack": stack})
+        return self.kubernetes_loader(name=name)
 
-    def get_from_kubernetes(self):
-        return self.kubernetes_resource()
+    def get_from_kubernetes(self, stack: "Stack" = None):
+        return self.kubernetes_resource(stack=stack)
 
 
 class ResourceList(list):
@@ -68,5 +69,6 @@ class NamespacedResource(Resource):
             )
         )
 
-    def kubernetes_resource(self):
-        return self.kubernetes_loader(namespace=self.namespace, name=self.name)
+    def kubernetes_resource(self, stack: "Stack" = None):
+        name = Prefixed(self.name).render(context={"stack": stack})
+        return self.kubernetes_loader(namespace=self.namespace, name=name)

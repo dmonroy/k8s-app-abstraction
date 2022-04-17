@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 
 import requests
 import yaml
+from jinja2 import BaseLoader, Environment
 
 
 def uri_validator(x):
@@ -81,7 +82,7 @@ def snakelize(s):
     ).lower()
 
 
-def dict_to_yaml(data):
+def dict_to_yaml(data, context: dict = None):
     def _format(res):
         if isinstance(res, dict):
             new = {}
@@ -94,6 +95,40 @@ def dict_to_yaml(data):
         if isinstance(res, list):
             return [_format(_) for _ in res]
 
+        if isinstance(res, LazyString):
+            return res.render(context)
+
         return res
 
     return yaml.safe_dump(_format(data))
+
+
+class Context(object):
+    def __init__(self, context):
+        self.context = context
+
+    def resolve(self, name):
+        return name
+
+    def prefix(self, name):
+        return f"{self.context['stack'].name}-{name}"
+
+
+class LazyString(str):
+
+    context: object = None
+
+    def get_template(self):
+        return self
+
+    def render(self, context):
+        rtemplate = Environment(loader=BaseLoader).from_string(self.get_template())
+
+        context = Context(context)
+
+        return rtemplate.render(resolve=context.resolve, prefix=context.prefix)
+
+
+class Prefixed(LazyString):
+    def get_template(self):
+        return "{{ prefix('%s') }}" % self
