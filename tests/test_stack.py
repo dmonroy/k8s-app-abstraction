@@ -63,11 +63,11 @@ def test_stack_to_yaml():
         for item in yaml.safe_load_all(stack_yaml)
     }
 
-    deploy = generated["Deployment/a-deploy"]
+    deploy = generated["Deployment/my-stack-a-deploy"]
     assert deploy["apiVersion"] == "apps/v1"
     assert deploy["spec"]["replicas"] == 2
 
-    daemonset = generated["DaemonSet/a-daemonset"]
+    daemonset = generated["DaemonSet/my-stack-a-daemonset"]
     assert daemonset["apiVersion"] == "apps/v1"
 
 
